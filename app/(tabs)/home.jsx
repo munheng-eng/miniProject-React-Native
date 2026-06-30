@@ -7,6 +7,8 @@ import { globalStyle } from '../../assets/styles/global.style';
 import { homeStyle } from '../../assets/styles/home.style';
 import { COLORS } from '../../constants/color';
 import { useScreenTheme } from '../../components/SafeScreen';
+import { getExpenses } from '../../api/apiServiceExpenses';
+import { getPlaces } from '../../api/apiServicePlaces';
 
 const home = () => {
   const router = useRouter();
@@ -14,6 +16,9 @@ const home = () => {
   const [loading, setLoading] = useState(true);
 
   const { setBgColor, setStatusStyle } = useScreenTheme();
+
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [totalPlaces, setTotalPlaces] = useState(0);
 
   const handleLogout = async () => {
     try {
@@ -28,13 +33,15 @@ const home = () => {
   };
 
   useEffect(() => {
-    fetchUser();
+    fetchDashboardData();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       setBgColor(COLORS.primary);
       setStatusStyle('light-content');
+
+      fetchDashboardData();
 
       return () => {
         setBgColor(COLORS.background);
@@ -43,16 +50,24 @@ const home = () => {
     }, [setBgColor, setStatusStyle])
   );
 
-  const fetchUser = async () => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const data = await getUser();
-      if (data && data.user) {
-        setUser(data.user);
+      const userData = await getUser();
+      if (userData && userData.user) {
+        setUser(userData.user);
       }
+      const expensesData = await getExpenses();
+      const expensesList = expensesData?.data || [];
+      const sum = expensesList.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+      setTotalExpenses(sum);
+
+      const placesData = await getPlaces();
+      const placesList = Array.isArray(placesData) ? placesData : [];
+      setTotalPlaces(placesList.length);
+
     } catch (error) {
-      console.log('User unauthenticated. Redirecting to login...');
-      router.replace("/screens/LoginScreen");
+      console.log('Error loading dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -88,13 +103,13 @@ const home = () => {
           <View style={homeStyle.secondCard}>
             <View style={homeStyle.cardContent}>
               <Text style={homeStyle.cardTitleSecond}>Total Expense 💵</Text>
-              <Text style={homeStyle.cardTitleSecond}>RM xx.xx</Text>
+              <Text style={homeStyle.cardTitleSecond}>RM {totalExpenses.toFixed(2)}</Text>
             </View>
           </View>
           <View style={homeStyle.thirdCard}>
             <View style={homeStyle.cardContent}>
               <Text style={homeStyle.cardTitleFirst}>Places 🗺️</Text>
-              <Text style={homeStyle.cardTitleFirst}>x</Text>
+              <Text style={homeStyle.cardTitleFirst}>{totalPlaces}</Text>
             </View>
           </View>
         </View>
