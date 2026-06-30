@@ -1,3 +1,12 @@
+git clone https://github.com/munheng-eng/miniProject-React-Native.git
+cd miniProject-React-Native
+npm install
+# [Stop here: Add the .env and google-services.json files to the root directory]
+npx expo prebuild --platform android
+npx expo run:android --device
+
+
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
