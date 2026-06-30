@@ -18,6 +18,10 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Sensitive Configuration Files (Crucial updates here)
+.env
+google-services.json
+
 # Metro
 .metro-health-check*
 
@@ -41,3 +45,4 @@ app-example
 # generated native folders
 /ios
 /android
+

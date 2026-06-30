@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Linking, AppState, StyleSheet } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { COLORS } from '../../constants/color';
 import { Ionicons } from "@expo/vector-icons";
@@ -8,20 +8,23 @@ import { qrScanStyle } from '../../assets/styles/qrScan.style';
 
 const qrScan = () => {
     const [permission, requestPermission] = useCameraPermissions();
-    const [scanned, setScanned] = useState(false);
+    const isScannedRef = useRef(false);
 
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async (nextAppState) => {
-            if (nextAppState === 'active' && requestPermission) {
-                await requestPermission();
+            if (nextAppState === 'active') {
+                isScannedRef.current = false;
+                if (permission && !permission.granted && requestPermission) {
+                    await requestPermission();
+                }
             }
         });
         return () => subscription.remove();
-    }, [requestPermission]);
+    }, [permission, requestPermission]);
 
-    const handleBarcodeScanned = async ({ type, data }) => {
-        if (scanned) return;
-        setScanned(true);
+    const handleBarcodeScanned = useCallback(async ({ type, data }) => {
+        if (isScannedRef.current) return;
+        isScannedRef.current = true;
         const isUrl = data.startsWith('http://') || data.startsWith('https://');
 
         if (isUrl) {
@@ -29,7 +32,7 @@ const qrScan = () => {
                 "Link Detected",
                 `Do you want to open this page in your browser?\n\n${data}`,
                 [
-                    { text: "Cancel", onPress: () => setScanned(false), style: "cancel" },
+                    { text: "Cancel", onPress: () => {isScannedRef.current = false;}, style: "cancel" },
                     {
                         text: "Open Browser",
                         onPress: async () => {
@@ -42,8 +45,7 @@ const qrScan = () => {
                                 }
                             } catch (err) {
                                 Alert.alert("Error", "An unexpected error occurred opening the link.");
-                            } finally {
-                                setScanned(false);
+                                isScannedRef.current = false;
                             }
                         }
                     }
@@ -53,10 +55,10 @@ const qrScan = () => {
             Alert.alert(
                 "Text Scanned",
                 `Data content:\n${data}`,
-                [{ text: "Scan Again", onPress: () => setScanned(false) }]
+                [{ text: "Scan Again", onPress: () => { isScannedRef.current = false; } }]
             );
         }
-    };
+    }, [])
 
     if (!permission) {
         return (
@@ -81,10 +83,11 @@ const qrScan = () => {
         <View style={qrScanStyle.container}>
             <CameraView
                 style={qrScanStyle.cameraViewFull}
+                barcodeScannerEnabled={true}
                 barcodeScannerSettings={{
                     barcodeTypes: ["qr"],
                 }}
-                onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+                onBarcodeScanned={handleBarcodeScanned}
             />
 
             <View style={qrScanStyle.overlayContainer}>

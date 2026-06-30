@@ -9,6 +9,7 @@ import { COLORS } from '../../constants/color'
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import FileFunc from '../../components/FileFunc';
+import { requestAndGetFCMToken, triggerLocalNotification } from '../../utils/notification'
 
 const ExpenseForm = () => {
     const router = useRouter();
@@ -27,8 +28,19 @@ const ExpenseForm = () => {
     const isEditing = !!id;
 
     useEffect(() => {
-        if (isEditing) {
-            const fetchExpenseDetails = async () => {
+        const setupNotificationsAndFetchData = async () => {
+            try {
+                const token = await requestAndGetFCMToken();
+
+                if (token) {
+                    // Just want to show it incase expired or what!!!!!!
+                    console.log('ACTIVE FCM TOKEN:', token);
+                }
+            } catch (err) {
+                console.log('Notification setup initialization error:', err);
+            }
+
+            if (isEditing) {
                 try {
                     setLoading(true);
                     const response = await getSingleExpense(id);
@@ -46,10 +58,10 @@ const ExpenseForm = () => {
                 } finally {
                     setLoading(false);
                 }
-            };
+            }
+        };
 
-            fetchExpenseDetails();
-        }
+        setupNotificationsAndFetchData();
     }, [id]);
 
     const handleFileChange = (fileDetails) => {
@@ -85,12 +97,6 @@ const ExpenseForm = () => {
         formData.append('description', (description || '').trim());
         formData.append('date', new Date().toISOString().split('T')[0]);
 
-        {/**
-            if (pickedFileObject && pickedFileObject.name) {
-            formData.append('attachment', `receipts/${pickedFileObject.name}`);
-        }
-             */}
-
         if (pickedFileObject && pickedFileObject.uri) {
             formData.append('attachment', pickedFileObject.uri);
         } else if (existingAttachmentUrl) {
@@ -115,6 +121,10 @@ const ExpenseForm = () => {
                 };
 
                 await updateExpense(id, updatePayload);
+                await triggerLocalNotification(
+                    "💵💵💵 Expense Updated",
+                    `Successfully updated modifications for "${title.trim()}".`
+                );
                 Alert.alert("Success", "Expense updated successfully!", [
                     { text: "OK", onPress: () => router.back() }
                 ]);

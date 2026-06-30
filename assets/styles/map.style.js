@@ -4,13 +4,16 @@ import { StyleSheet } from 'react-native';
 export const mapStyle = StyleSheet.create({
     mapContainer: {
         height: 300,
+        width: '100%',
         position: 'relative',
         borderRadius: 15,
         overflow: 'hidden',
+        backgroundColor: '#f0f0f0',
     },
 
     map: {
-        flex: 1,
+        width: '100%',
+        height: '100%',
         borderRadius: 25,
         overflow: 'hidden',
     },

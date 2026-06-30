@@ -1,5 +1,5 @@
 import { TextInput, View, Text, TouchableOpacity, ActivityIndicator, Alert, Linking, AppState } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Label } from '@react-navigation/elements';
 import { getCurrentPositionAsync, useForegroundPermissions, PermissionStatus, reverseGeocodeAsync } from 'expo-location'
 import { COLORS } from '../constants/color'
@@ -12,6 +12,8 @@ const MapFunc = ({ onLocationPicked, initialLocation, isViewing }) => {
     const [pickedLocation, setPickedLocation] = useState();
     const [addressText, setAddressText] = useState("No location picked yet.");
     const [locationPermissionInformation, requestPermission] = useForegroundPermissions();
+
+    const isFetchingLocation = useRef(false);
 
     useEffect(() => {
         if (initialLocation && initialLocation.latitude) {
@@ -34,12 +36,8 @@ const MapFunc = ({ onLocationPicked, initialLocation, isViewing }) => {
         if (isViewing) return;
 
         const subscription = AppState.addEventListener('change', async (nextAppState) => {
-            if (nextAppState === 'active' && requestPermission) {
-                const permissionResponse = await requestPermission();
-
-                if (permissionResponse.granted && !pickedLocation) {
-                    getLocationHandler();
-                }
+            if (nextAppState === 'active' && locationPermissionInformation?.granted && !pickedLocation) {
+                getLocationHandler();
             }
         });
         return () => subscription.remove();
@@ -49,7 +47,7 @@ const MapFunc = ({ onLocationPicked, initialLocation, isViewing }) => {
         if (!initialLocation && !isViewing) {
             getLocationHandler();
         }
-    }, [locationPermissionInformation, isViewing]);
+    }, []);
 
     const verifyPermission = async () => {
         if (!locationPermissionInformation) return false;
@@ -86,6 +84,7 @@ const MapFunc = ({ onLocationPicked, initialLocation, isViewing }) => {
         }
 
         try {
+            isFetchingLocation.current = true;
             setIsLoading(true);
             const location = await getCurrentPositionAsync({ accuracy: 4 });
             const coords = {

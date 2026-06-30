@@ -123,7 +123,7 @@ const PlaceForm = () => {
             Alert.alert("Submission Failed", serverErrorMessage);
 
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -136,63 +136,54 @@ const PlaceForm = () => {
     }
 
     return (
+
         <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
         >
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                    <View style={globalStyle.bodyFormContainer}>
-                        <View style={globalStyle.backButtonContainer}>
-                            <TouchableOpacity style={globalStyle.backButton} onPress={() => router.back()}>
-                                <Ionicons name="arrow-back" style={globalStyle.actionStyle} />
-                            </TouchableOpacity>
-                            <Text style={globalStyle.backButtonText}>Back</Text>
-                        </View>
+            <View style={globalStyle.bodyFormContainer}>
+                <View style={globalStyle.backButtonContainer}>
+                    <TouchableOpacity style={globalStyle.backButton} onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" style={globalStyle.actionStyle} />
+                    </TouchableOpacity>
+                    <Text style={globalStyle.backButtonText}>Back</Text>
+                </View>
 
-                        <Text style={globalStyle.title}>{isViewing ? 'View Place Details' : 'Add Place'}</Text>
+                <Text style={globalStyle.title}>{isViewing ? 'View Place Details' : 'Add Place'}</Text>
 
-                        <View style={inputForm.inputField}>
-                            <Label style={inputForm.inputFieldLabel}>Title</Label>
-                            <TextInput
-                                placeholder="Title input here ....."
-                                placeholderTextColor={COLORS.faded}
-                                value={title}
-                                onChangeText={setTitle}
-                                style={inputForm.inputFieldContainer}
-                                readOnly={isViewing}
-                            />
-                        </View>
+                <View style={inputForm.inputField}>
+                    <Label style={inputForm.inputFieldLabel}>Title</Label>
+                    <TextInput
+                        placeholder="Title input here ....."
+                        placeholderTextColor={COLORS.faded}
+                        value={title}
+                        onChangeText={setTitle}
+                        style={inputForm.inputFieldContainer}
+                        readOnly={isViewing}
+                    />
+                </View>
 
-                        <View style={inputForm.inputField}>
-                            <Label style={inputForm.inputFieldLabel}>Camera Image</Label>
-                        </View>
+                <View style={inputForm.inputField}>
+                    <Label style={inputForm.inputFieldLabel}>Camera Image</Label>
+                </View>
 
-                        <CameraFunc onImagePicked={handleImageChange} initialImage={pickedImageUri} isViewing={isViewing} />
-                        <MapFunc onLocationPicked={handleLocationChange} initialLocation={initialDetails.location} isViewing={isViewing} />
+                <CameraFunc onImagePicked={handleImageChange} initialImage={pickedImageUri} isViewing={isViewing} />
+                <MapFunc onLocationPicked={handleLocationChange} initialLocation={initialDetails.location} isViewing={isViewing} />
 
-                        {!isViewing && (
-                            <TouchableOpacity
-                                style={[inputForm.authButton, submitting && { opacity: 0.6 }]}
-                                onPress={handleSubmit}
-                                disabled={submitting}
-                            >
-                                {/*
-                                {submitting ? (
-                                    <ActivityIndicator size="medium" color={COLORS.primary} animating={true} />
-                                ) : (
-                                    <Text style={inputForm.authButtonText}>S A V E</Text>
-                                )}
-                                */}
+                {!isViewing && (
+                    <TouchableOpacity
+                        style={[inputForm.authButton, submitting && { opacity: 0.6 }]}
+                        onPress={handleSubmit}
+                        disabled={submitting}
+                    >
+                        <Text style={inputForm.authButtonText}>S A V E</Text>
 
-                                <Text style={inputForm.authButtonText}>S A V E</Text>
-
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
+                    </TouchableOpacity>
+                )}
+            </View>
         </ScrollView>
+
+
     )
 }
 

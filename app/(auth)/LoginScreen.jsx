@@ -2,11 +2,11 @@ import { Label } from '@react-navigation/elements';
 import { useRouter } from "expo-router";
 import { useState } from 'react';
 import { Alert, Image, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
-import { login } from '../../api/apiServiceAuth';
+import { login, googleLoginBackend } from '../../api/apiServiceAuth';
 import { inputForm } from '../../assets/styles/inputForm.style';
 import { IMAGES } from "../../constants/image";
 import { COLORS } from '../../constants/color'
-import { globalStyle } from '../../assets/styles/global.style';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 
 const LoginScreen = () => {
     const router = useRouter();
@@ -32,6 +32,35 @@ const LoginScreen = () => {
             router.replace("/(tabs)/home");
         } catch (error) {
             Alert.alert('Error', 'Failed to login or fetch data.');
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const response = await GoogleSignin.signIn();
+
+            const idToken = response.data?.idToken;
+            
+            if (!idToken) {
+                throw new Error("Google Sign-In returned an empty identity token parameter.");
+            }
+
+            await googleLoginBackend(idToken);
+            
+            Alert.alert('Success', 'Google Account Authorized Successfully!');
+            router.replace("/(tabs)/home");
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                console.log("User terminated interaction prompt flow.");
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                console.log("Operation currently executing inside system pipeline.");
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                Alert.alert('Error', 'Google Play services are outdated or absent on this system.');
+            } else {
+                console.error("Google login failure stack: ", error);
+                Alert.alert('Authentication Failure', 'Could not establish connection with backend system profile.');
+            }
         }
     };
 
@@ -75,7 +104,9 @@ const LoginScreen = () => {
                 <View style={inputForm.bottomTitle}>
                     <Text style={inputForm.bottomText}>Or Sign In With</Text>
                     <View style={inputForm.imageList}>
-                        <Image source={IMAGES.google_icon} style={inputForm.imageLogo} resizeMode='contain' />
+                        <TouchableOpacity onPress={handleGoogleSignIn} activeOpacity={0.7}>
+                            <Image source={IMAGES.google_icon} style={inputForm.imageLogo} resizeMode='contain' />
+                        </TouchableOpacity>
                         <Image source={IMAGES.apple_icon} style={inputForm.imageLogo} resizeMode='contain' />
                     </View>
                     <Text style={inputForm.bottomText}>Don't have an account.

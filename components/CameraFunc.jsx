@@ -14,27 +14,10 @@ const CameraFunc = ({ onImagePicked, initialImage, isViewing }) => {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        if (initialImage) {
+        if (initialImage && isViewing) {
             setPickedImage(initialImage);
         }
-    }, [initialImage]);
-
-    useEffect(() => {
-        if (isViewing) return;
-
-        const subscription = AppState.addEventListener('change', async (nextAppState) => {
-            if (nextAppState === 'active' && requestPermission) {
-                const updatedPermission = await requestPermission();
-                if (updatedPermission.granted) {
-                    handleImageHandler();
-                }
-            }
-        });
-
-        return () => {
-            subscription.remove();
-        };
-    }, [requestPermission, isViewing]);
+    }, [initialImage, isViewing]);
 
     const verifyPermission = async () => {
         if (!cameraPermissionInformation) {
@@ -93,19 +76,15 @@ const CameraFunc = ({ onImagePicked, initialImage, isViewing }) => {
                     to: permanentLocalPath
                 });
 
-                // See picture on device
-                const mediaPermission = await MediaLibrary.requestPermissionsAsync(true); // Passing true requests write-only access
+                const mediaPermission = await MediaLibrary.requestPermissionsAsync(true);
 
                 if (mediaPermission.granted || mediaPermission.status === 'granted') {
                     await MediaLibrary.createAssetAsync(permanentLocalPath);
-                    console.log("Success! Photo duplicated into the public device gallery.");
                 }
-                
+
 
                 setPickedImage(permanentLocalPath);
                 onImagePicked(permanentLocalPath);
-
-                console.log("Photo permanently stored on local disk path at:", permanentLocalPath);
 
             } catch (error) {
                 console.error("Local disk save sequence failed:", error);
@@ -114,14 +93,6 @@ const CameraFunc = ({ onImagePicked, initialImage, isViewing }) => {
                 setIsSaving(false);
             }
         }
-
-        {/*
-        if (!image.canceled && image.assets && image.assets.length > 0) {
-            const selectedUri = image.assets[0].uri;
-            setPickedImage(selectedUri);
-            onImagePicked(selectedUri);
-        }
-         */}
     }
 
     if (!cameraPermissionInformation) {
@@ -133,12 +104,6 @@ const CameraFunc = ({ onImagePicked, initialImage, isViewing }) => {
     }
 
     let imagePreview = <Text style={placeStyle.textPattern}>No image taken yet</Text>;
-
-    {/*
-        if (pickedImage) {
-        imagePreview = <Image style={placeStyle.image} source={{ uri: pickedImage }} />;
-    }
-         */}
 
     if (isSaving) {
         imagePreview = (
